@@ -1,6 +1,6 @@
 import asyncio
 import datetime
-from typing import Any, Callable, Coroutine, Awaitable
+from typing import Any, Callable, Awaitable
 
 from aiohttp import web
 
@@ -10,6 +10,8 @@ from diffcord.vote import UserVoteInformation, UserBotVote
 
 
 class VoteWebhookListener:
+    """ Handles incoming POST requests from Diffcord.
+    """
 
     def __init__(self, port: int, handle_vote: Callable[[UserBotVote], Awaitable[None]], host: str = None,
                  silent: bool = False,
@@ -60,13 +62,11 @@ class VoteWebhookListener:
 
         return web.Response(status=200)
 
+    def __repr__(self):
+        return f"<WebhookListener port={self.port}>"
 
-def __repr__(self):
-    return f"<WebhookListener port={self.port}>"
-
-
-def __str__(self):
-    return self.__repr__()
+    def __str__(self):
+        return self.__repr__()
 
 
 class Client(HTTPApi):
