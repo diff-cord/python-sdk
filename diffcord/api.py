@@ -18,10 +18,10 @@ class HTTPApi:
 
         self.session = aiohttp.ClientSession(headers=headers)
 
-    async def make_request(self, path: str, method: str, **kwargs: Any) -> Any:
+    async def make_request(self, method: str, path: str, **kwargs: Any) -> Any:
         """ Make a request to the Diffcord API.
-        :param: path: The path of the request
         :param: method: The method of the request
+        :param: path: The path of the request
         :param: kwargs: The kwargs of the request
         :return: The response from the Diffcord API
         """
@@ -41,7 +41,14 @@ class HTTPApi:
                 raise RateLimitException(json_data["error"], response)
 
             if not response.ok:
-                raise HTTPException(response.status, json_data["error"]["message"], json_data["error"]["code"])
+
+                try:
+                    raise HTTPException(response.status, json_data["error"]["message"], json_data["error"]["code"])
+                except Exception:
+                    raise HTTPException(response.status, "ERROR", "ERR_CODE")
+
+            if json_data is None:
+                return
 
             return json_data["data"]
 
