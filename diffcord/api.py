@@ -52,7 +52,7 @@ class HTTPApi:
 
             return json_data["data"]
 
-    async def close(self) -> None:
+    async def close_requests(self) -> None:
         """ Close the aiohttp session.
         """
         await self.session.close()

@@ -5,24 +5,34 @@ class UserBotVote:
     """  Represents a user vote for a bot.
     """
 
-    def __init__(self, vote_id: str, user_id: str, bot_id: str, voted_at: str, rewarded: bool, testing: bool):
+    def __init__(self, vote_id: str, user_id: str, bot_id: str, voted_at: str, rewarded: bool, test: bool,
+                 monthly_votes: int):
         """ Initialize a UserBotVote object.
         :param: vote_id: The id of the vote
         :param: user_id: The id of the user who has voted
         :param: bot_id: The id of the bot which the user has voted for
         :param: voted_at: Time of when the user voted
         :param: rewarded: Whether the user vote has been rewarded and/or acknowledged
-        :param: testing: Whether this is a testing bot vote (sent as a test via bot/server api dashboard) or not
+        :param: test: Whether this is a testing bot vote (sent as a test via bot/server api dashboard) or not
+        :param: monthly_votes: The number of votes this user has given this month
         """
         self.vote_id: str = vote_id
         self.user_id: int = int(user_id)
         self.bot_id: int = int(bot_id)
-        self.voted_at: datetime.datetime = datetime.datetime.strptime(voted_at, "%Y-%m-%dT%H:%M:%S.%fZ")
+        self.voted_at: datetime.datetime = datetime.datetime.fromisoformat(voted_at)
         self.rewarded: bool = rewarded
-        self.testing: bool = testing
+        self.test: bool = test
+        self.monthly_votes: int = monthly_votes
+
+    @property
+    def votes_this_month(self) -> int:
+        """ Get the number of votes this user has given this month.
+        :return: The number of votes this user has given this month
+        """
+        return self.monthly_votes
 
     def __repr__(self):
-        return f"<UserBotVote vote_id={self.vote_id} user_id={self.user_id} bot_id={self.bot_id} voted_at={self.voted_at} rewarded={self.rewarded} testing={self.testing}>"
+        return f"<UserBotVote vote_id={self.vote_id} user_id={self.user_id} bot_id={self.bot_id} voted_at={self.voted_at} rewarded={self.rewarded} testing={self.test} votes={self.monthly_votes}>"
 
     def __str__(self):
         return self.__repr__()

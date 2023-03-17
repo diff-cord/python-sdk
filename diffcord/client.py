@@ -1,4 +1,6 @@
-from typing import Any, Callable
+import asyncio
+import datetime
+from typing import Any, Callable, Coroutine, Awaitable
 
 from aiohttp import web
 
@@ -8,28 +10,36 @@ from diffcord.vote import UserVoteInformation, UserBotVote
 
 class VoteWebhookListener:
 
-    def __init__(self, port: int, handle_vote: Callable[[UserBotVote], None], host: str = None, silent: bool = False,
-                 verify_code: str = None):
+    def __init__(self, port: int, handle_vote: Callable[[UserBotVote], Awaitable[None]], host: str = None,
+                 silent: bool = False,
+                 verify_code: str = None, listener_sleep: int = 60):
         self.port = port
         self.handle_vote = handle_vote
         self.silent = silent
         self.verify_code = verify_code
+        self.listener_sleep = listener_sleep
+        self.__app = web.Application()
+        self.__server = None
 
         if host is None:
             self.host = "0.0.0.0"
+        else:
+            self.host = host
 
     async def start(self) -> None:
         """ Start the webhook listener.
         """
-        app = web.Application()
-        app.router.add_post("/", self.handle_vote_webhook)
-        runner = web.AppRunner(app)
-        await runner.setup()
-        site = web.TCPSite(runner, self.host, self.port)
-        await site.start()
+        self.__app.router.add_post("/", self.handle_vote_webhook)
+
+        app = web.AppRunner(self.__app)
+
+        await app.setup()
+
+        self.__server = web.TCPSite(app, self.host, self.port)
+        await self.__server.start()
 
         if not self.silent:
-            print(f"Diffcord webhook listener started on {self.host}:{self.port}")
+            print("Diffcord webhook listener started. Listening on port", self.port)
 
     async def handle_vote_webhook(self, request: web.Request) -> web.Response:
         """ Handle the POST request from Diffcord.
@@ -40,39 +50,47 @@ class VoteWebhookListener:
         payload = await request.json()
 
         try:
-            self.handle_vote(UserBotVote(**payload["data"]))
-        except:
+            await self.handle_vote(UserBotVote(**payload))
+        except Exception as e:
+            if not self.silent:
+                print("Error handling vote:", e)
+
             return web.Response(status=500)
 
         return web.Response(status=200)
 
-    def __repr__(self):
-        return f"<WebhookListener port={self.port}>"
 
-    def __str__(self):
-        return self.__repr__()
+def __repr__(self):
+    return f"<WebhookListener port={self.port}>"
+
+
+def __str__(self):
+    return self.__repr__()
 
 
 class Client(HTTPApi):
     """ Represents a client connection to the Diffcord API.
     """
+    __SEND_STATS_SLEEP_DURATION = datetime.timedelta(hours=1)
 
-    def __init__(self, bot: Any, token: str, vote_listener: VoteWebhookListener):
+    def __init__(self, bot: Any, token: str, vote_listener: VoteWebhookListener, send_stats: bool = True,
+                 send_stats_success: Callable[[], Awaitable[None]] = None,
+                 send_stats_failure: Callable[[Exception], Awaitable[None]] = None) -> None:
         """ Initialize a Client object.
         :param: bot: The bot object
         :param: token: Diffcord API token
         :param: vote_listener: The webhook vote listener which listens to incoming vote webhooks from Diffcord
+        :param: send_stats: Whether to send bot stats to Diffcord
+        :param: send_stats_success: A function to call when sending stats to Diffcord is successful
+        :param: send_stats_failure: A function to call when sending stats to Diffcord fails
         """
         super().__init__(token)
         self.bot = bot
         self.token = token
         self.vote_listener = vote_listener
-
-    async def start(self) -> None:
-        """ Start the client.
-        """
-        if self.vote_listener is not None:
-            await self.vote_listener.start()
+        self.send_stats = send_stats
+        self.send_stats_success = send_stats_success
+        self.send_stats_failure = send_stats_failure
 
     async def get_user_vote_info(self, user_id: str | int) -> UserVoteInformation:
         """ Get the vote information for a user.
@@ -89,11 +107,33 @@ class Client(HTTPApi):
         bot_info: dict = await self.make_request("GET", f"/v1/votes")
         return bot_info["month_votes"]
 
-    async def update_bot_stats(self, guild_count: int) -> None:
+    async def __update_bot_stats(self, guild_count: int) -> None:
         """ Update bot stats
         :param: guild_count: The new guild count
         """
         await self.make_request("POST", "/v1/stats", params={"guilds": guild_count})
+
+    async def start(self) -> None:
+        """ Start the client
+        """
+        # start listener for incoming votes
+        await self.vote_listener.start()
+
+        if self.send_stats:
+
+            # send stats to Diffcord
+            while True:
+
+                try:
+                    await self.__update_bot_stats(guild_count=len(self.bot.guilds))
+                except Exception as e:
+                    if self.send_stats_failure is not None:
+                        await self.send_stats_failure(e)
+                else:
+                    if self.send_stats_success is not None:
+                        await self.send_stats_success()
+
+                await asyncio.sleep(Client.__SEND_STATS_SLEEP_DURATION.total_seconds())
 
     def __repr__(self):
         return f"<Client bot={self.bot} token={self.token}>"
