@@ -4,6 +4,7 @@ from typing import Any, Callable, Coroutine, Awaitable
 
 from aiohttp import web
 
+from diffcord import InvalidTokenException
 from diffcord.api import HTTPApi
 from diffcord.vote import UserVoteInformation, UserBotVote
 
@@ -118,6 +119,13 @@ class Client(HTTPApi):
         """
         # start listener for incoming votes
         await self.vote_listener.start()
+
+        # make a request to validate the token
+
+        try:
+            await self.bot_votes_this_month()
+        except InvalidTokenException:
+            raise InvalidTokenException("Invalid Diffcord API token provided")
 
         if self.send_stats:
 

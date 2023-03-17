@@ -29,7 +29,7 @@ class HTTPApi:
             json_data: dict = await response.json()
 
             if response.status == 401:
-                if json_data["error"]["CODE"] == "ERR_INVALID_API_KEY":
+                if json_data["error"]["code"] == "ERR_INVALID_API_KEY":
                     raise InvalidTokenException(json_data["error"], response)
 
                 raise HTTPException(response.status, json_data["error"]["message"], json_data["error"]["code"])

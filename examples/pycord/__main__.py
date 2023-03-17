@@ -31,7 +31,7 @@ async def on_vote(vote: UserBotVote) -> None:
 # create Diffcord client & webhook listener
 
 # "port" represents the port to listen on for incoming vote webhooks from Diffcord, choose any port you would like which is not in use
-diff_webhook_listener = VoteWebhookListener(port=6969, handle_vote=on_vote, verify_code="noob")
+diff_webhook_listener = VoteWebhookListener(port=8080, handle_vote=on_vote, verify_code="noob")
 
 diff_client = Client(bot, "YOUR_DIFFCORD_API_TOKEN", diff_webhook_listener,
                      send_stats_success=send_stats_success, send_stats_failure=send_stats_failure)
@@ -51,8 +51,8 @@ async def on_close():
     await diff_client.close_requests()
 
 
-@bot.slash_command(name="test")
-async def test_command(ctx):
+@bot.slash_command(name="example")
+async def example_command(ctx):
     # get user vote info
     user_vote_info: UserVoteInformation = await diff_client.get_user_vote_info(ctx.author.id)
 
