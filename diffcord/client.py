@@ -121,11 +121,10 @@ class Client(HTTPApi):
         await self.vote_listener.start()
 
         # make a request to validate the token
-
         try:
             await self.bot_votes_this_month()
         except InvalidTokenException:
-            raise InvalidTokenException("Invalid Diffcord API token provided")
+            raise InvalidTokenException(error={"message": "Invalid token provided.", "code": "ERR_INVALID_API_KEY"}, response=None)
 
         if self.send_stats:
 

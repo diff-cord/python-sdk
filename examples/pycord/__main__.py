@@ -24,6 +24,7 @@ async def on_vote(vote: UserBotVote) -> None:
     """
     # LOGIC HERE... (give rewards, etc.)
 
+    # example: send a DM to the user who voted
     user = await bot.fetch_user(vote.user_id)  # Get the discord user object from the user id
     await user.send("Thanks for voting!")  # Send a DM to the user who voted
 
@@ -40,15 +41,15 @@ diff_client = Client(bot, "YOUR_DIFFCORD_API_TOKEN", diff_webhook_listener,
 # on startup event
 @bot.event
 async def on_ready():
-    # start the webhook listener
-    await diff_client.start()
+    # start the webhook listener & start send stats
+    await diff_client.start()  # required
 
 
 # on bot close event
 @bot.event
 async def on_close():
     # close Diffcord requests client
-    await diff_client.close_requests()
+    await diff_client.close_requests()  # optional, but recommended
 
 
 @bot.slash_command(name="example")
