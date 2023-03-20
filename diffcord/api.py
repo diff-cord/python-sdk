@@ -1,5 +1,6 @@
 from typing import Any
-import aiohttp
+
+import httpx
 
 from diffcord.error import InvalidTokenException, ServerException, HTTPException, RateLimitException
 
@@ -16,7 +17,7 @@ class HTTPApi:
             "User-Agent": f"Diffcord-Python-SDK",
         }
 
-        self.session = aiohttp.ClientSession(headers=headers)
+        self.session = httpx.AsyncClient(headers=headers)
 
     async def make_request(self, method: str, path: str, **kwargs: Any) -> Any:
         """ Make a request to the Diffcord API.
@@ -53,6 +54,6 @@ class HTTPApi:
             return json_data["data"]
 
     async def close_requests(self) -> None:
-        """ Close the aiohttp session.
+        """ Close the http session.
         """
-        await self.session.close()
+        await self.session.aclose()

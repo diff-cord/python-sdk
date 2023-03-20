@@ -1,4 +1,4 @@
-from aiohttp import ClientResponse
+import httpx
 
 
 class DiffcordException(Exception):
@@ -20,8 +20,8 @@ class HTTPException(DiffcordException):
 
 
 class RateLimitException(HTTPException):
-    def __init__(self, error: dict, response: ClientResponse):
-        super().__init__(response.status, error["message"], error["code"])
+    def __init__(self, error: dict, response: httpx.Response):
+        super().__init__(response.status_code, error["message"], error["code"])
 
     def __repr__(self):
         return f"<RateLimitException status={self.status_code} message={self.message} error_code={self.error_code}>"
@@ -31,8 +31,8 @@ class RateLimitException(HTTPException):
 
 
 class ServerException(HTTPException):
-    def __init__(self, error: dict, response: ClientResponse):
-        super().__init__(response.status, error["message"], error["code"])
+    def __init__(self, error: dict, response: httpx.Response):
+        super().__init__(response.status_code, error["message"], error["code"])
 
     def __repr__(self):
         return f"<ServerException status={self.status_code} message={self.message} error_code={self.error_code}>"
@@ -42,8 +42,8 @@ class ServerException(HTTPException):
 
 
 class MissingTokenException(HTTPException):
-    def __init__(self, error: dict, response: ClientResponse):
-        super().__init__(response.status, error["message"], error["code"])
+    def __init__(self, error: dict, response: httpx.Response):
+        super().__init__(response.status_code, error["message"], error["code"])
 
     def __repr__(self):
         return f"<MissingTokenException status={self.status_code} message={self.message} error_code={self.error_code}>"
@@ -54,12 +54,11 @@ class MissingTokenException(HTTPException):
 
 class InvalidTokenException(HTTPException):
 
-    def __init__(self, error: dict, response: ClientResponse):
-        super().__init__(response.status, error["message"], error["code"])
+    def __init__(self, error: dict, response: httpx.Response):
+        super().__init__(response.status_code, error["message"], error["code"])
 
     def __repr__(self):
         return f"<InvalidTokenException status={self.status_code} message={self.message} error_code={self.error_code}>"
 
     def __str__(self):
         return self.__repr__()
-

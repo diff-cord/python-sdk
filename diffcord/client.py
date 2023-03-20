@@ -1,13 +1,17 @@
+import json
 from typing import Union
 import asyncio
 import datetime
 from typing import Any, Callable, Awaitable
 
-from aiohttp import web
-
 from diffcord import InvalidTokenException
 from diffcord.api import HTTPApi
 from diffcord.vote import UserVoteInformation, UserBotVote
+
+import tornado.ioloop
+import tornado.web
+from tornado.httpserver import HTTPServer
+import logging
 
 
 class VoteWebhookListener:
@@ -15,52 +19,64 @@ class VoteWebhookListener:
     """
 
     def __init__(self, port: int, handle_vote: Callable[[UserBotVote], Awaitable[None]], host: str = None,
-                 silent: bool = False, verify_code: str = None, listener_sleep: int = 60):
+                 silent: bool = False, verify_code: str = None, listener_sleep: int = 60, log_level: int = logging.CRITICAL):
         self.port = port
-        self.handle_vote = handle_vote
         self.silent = silent
         self.verify_code = verify_code
         self.listener_sleep = listener_sleep
-        self.__app = web.Application()
-        self.__server = None
+        self.log_level = log_level
 
         if host is None:
             self.host = "0.0.0.0"
         else:
             self.host = host
 
+        self.__app = tornado.web.Application([(r"/", self.__handler_class(handle_vote))], debug=False)
+        self.__server = HTTPServer(self.__app)
+        self.__server.bind(self.port, self.host)
+
+    def __handler_class(self, handler):
+
+        verify_code = self.verify_code
+        silent = self.silent
+
+        class Handler(tornado.web.RequestHandler):
+
+            VERIFY_CODE = verify_code
+            SILENT = silent
+
+            async def post(self):
+                if self.VERIFY_CODE is not None and self.request.headers.get("Authorization") != self.VERIFY_CODE:
+                    self.set_status(403)
+                    return
+
+                # payload as dict
+                payload = json.loads(self.request.body.decode("utf-8"))
+
+                vote = UserBotVote(**payload)
+
+                try:
+                    await handler(vote)
+                except Exception as e:
+                    if not self.SILENT:
+                        print("Error handling vote:", e)
+
+                    self.set_status(500)
+                    return
+
+                self.set_status(200)
+
+        return Handler
+
     async def start(self) -> None:
         """ Start the webhook listener.
         """
-        self.__app.router.add_post("/", self.handle_vote_webhook)
+        logging.getLogger("tornado.access").setLevel(self.log_level)
 
-        app = web.AppRunner(self.__app)
-
-        await app.setup()
-
-        self.__server = web.TCPSite(app, self.host, self.port)
-        await self.__server.start()
+        self.__server.start()
 
         if not self.silent:
-            print("Diffcord webhook listener started. Listening on port", self.port)
-
-    async def handle_vote_webhook(self, request: web.Request) -> web.Response:
-        """ Handle the POST request from Diffcord.
-        """
-        if self.verify_code is not None and request.headers.get("Authorization") != self.verify_code:
-            return web.Response(status=403)
-
-        payload = await request.json()
-
-        try:
-            await self.handle_vote(UserBotVote(**payload))
-        except Exception as e:
-            if not self.silent:
-                print("Error handling vote:", e)
-
-            return web.Response(status=500)
-
-        return web.Response(status=200)
+            print("Webhook listener started on port", self.port)
 
     def __repr__(self):
         return f"<WebhookListener port={self.port}>"
