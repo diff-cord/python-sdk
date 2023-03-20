@@ -37,6 +37,8 @@ diff_webhook_listener = VoteWebhookListener(port=8080, handle_vote=on_vote, veri
 diff_client = Client(bot, "YOUR_DIFFCORD_API_TOKEN", diff_webhook_listener,
                      send_stats_success=send_stats_success, send_stats_failure=send_stats_failure)
 
+bot.diffcord_client = diff_client
+
 
 # on startup event
 @bot.event
