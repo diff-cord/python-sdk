@@ -1,3 +1,4 @@
+from typing import Union
 import asyncio
 import datetime
 from typing import Any, Callable, Awaitable
@@ -93,7 +94,7 @@ class Client(HTTPApi):
         self.send_stats_success = send_stats_success
         self.send_stats_failure = send_stats_failure
 
-    async def get_user_vote_info(self, user_id: str | int) -> UserVoteInformation:
+    async def get_user_vote_info(self, user_id: Union[str, int]) -> UserVoteInformation:
         """ Get the vote information for a user.
         :param: user_id: The id of the user whose vote information is being fetched
         :return: A UserVoteInformation object
