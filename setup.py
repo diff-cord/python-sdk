@@ -5,7 +5,7 @@ with open("requirements.txt") as f:
 
 setup(
     name='diffcord',
-    version='0.0.4',
+    version='0.0.5',
     description="A Python wrapper for the Diffcord API written in Python.",
     packages=find_packages(),
     author='jadelasmar4@gmail.com',
