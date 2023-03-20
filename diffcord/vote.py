@@ -5,7 +5,7 @@ class UserBotVote:
     """  Represents a user vote for a bot.
     """
 
-    def __init__(self, vote_id: str, user_id: str, bot_id: str, voted_at: str, rewarded: bool, test: bool,
+    def __init__(self, vote_id: str, user_id: str, bot_id: str, since_vote: str, rewarded: bool, test: bool,
                  monthly_votes: int):
         self.vote_id: str = vote_id
         """ The id of the vote. """
@@ -16,8 +16,12 @@ class UserBotVote:
         self.bot_id: int = int(bot_id)
         """ The id of the bot which the user has voted for. """
 
-        self.voted_at: datetime.datetime = datetime.datetime.fromisoformat(voted_at)
+        self.since_voted: datetime.timedelta = datetime.timedelta(seconds=float(since_vote))
         """ Time when the user voted. """
+
+        self.voted_at: datetime.datetime = datetime.datetime.utcnow() - self.since_voted
+        """ Time when the user voted. 
+        """
 
         self.rewarded: bool = rewarded
         """ Whether the user vote has been rewarded and/or acknowledged. """
