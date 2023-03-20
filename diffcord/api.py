@@ -5,10 +5,10 @@ from diffcord.error import InvalidTokenException, ServerException, HTTPException
 
 
 class HTTPApi:
-    __BASE_URL: str = "https://api.diffcord.com"
 
-    def __init__(self, token: str):
+    def __init__(self, token: str, base_url: str):
         self.token: str = token
+        self.base_url: str = base_url
 
         headers = {
             "x-api-key": self.token,
@@ -25,7 +25,7 @@ class HTTPApi:
         :param: kwargs: The kwargs of the request
         :return: The response from the Diffcord API
         """
-        async with self.session.request(method, f"{self.__BASE_URL}{path}", **kwargs) as response:
+        async with self.session.request(method, f"{self.base_url}{path}", **kwargs) as response:
             json_data: dict = await response.json()
 
             if response.status == 401:

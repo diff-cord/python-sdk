@@ -15,8 +15,7 @@ class VoteWebhookListener:
     """
 
     def __init__(self, port: int, handle_vote: Callable[[UserBotVote], Awaitable[None]], host: str = None,
-                 silent: bool = False,
-                 verify_code: str = None, listener_sleep: int = 60):
+                 silent: bool = False, verify_code: str = None, listener_sleep: int = 60):
         self.port = port
         self.handle_vote = handle_vote
         self.silent = silent
@@ -77,7 +76,7 @@ class Client(HTTPApi):
 
     def __init__(self, bot: Any, token: str, vote_listener: VoteWebhookListener, send_stats: bool = True,
                  send_stats_success: Callable[[], Awaitable[None]] = None,
-                 send_stats_failure: Callable[[Exception], Awaitable[None]] = None) -> None:
+                 send_stats_failure: Callable[[Exception], Awaitable[None]] = None, base_url: str = None) -> None:
         """ Initialize a Client object.
         :param: bot: The bot object
         :param: token: Diffcord API token
@@ -85,8 +84,9 @@ class Client(HTTPApi):
         :param: send_stats: Whether to send bot stats to Diffcord
         :param: send_stats_success: A function to call when sending stats to Diffcord is successful
         :param: send_stats_failure: A function to call when sending stats to Diffcord fails
+        :param: base_url: The base URL of the Diffcord API
         """
-        super().__init__(token)
+        super().__init__(token, "https://api.diffcord.com" if base_url is None else base_url)
         self.bot = bot
         self.token = token
         self.vote_listener = vote_listener
@@ -119,13 +119,15 @@ class Client(HTTPApi):
         """ Start the client
         """
         # start listener for incoming votes
-        await self.vote_listener.start()
+        if self.vote_listener is not None:
+            await self.vote_listener.start()
 
         # make a request to validate the token
         try:
             await self.bot_votes_this_month()
         except InvalidTokenException:
-            raise InvalidTokenException(error={"message": "Invalid token provided.", "code": "ERR_INVALID_API_KEY"}, response=None)
+            raise InvalidTokenException(error={"message": "Invalid token provided.", "code": "ERR_INVALID_API_KEY"},
+                                        response=None)
 
         if self.send_stats:
 
