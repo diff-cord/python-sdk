@@ -45,13 +45,6 @@ async def on_ready():
     await diff_client.start()  # required
 
 
-# on bot close event
-@bot.event
-async def on_close():
-    # close Diffcord requests client
-    await diff_client.close_requests()  # optional, but recommended
-
-
 @bot.slash_command(name="example")
 async def example_command(ctx):
     # get user vote info

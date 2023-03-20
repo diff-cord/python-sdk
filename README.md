@@ -11,8 +11,9 @@ pip install diffcord
 ## Pycord Example
 
 ```python
-import discord
 from diffcord import Client, VoteWebhookListener, UserBotVote, UserVoteInformation
+
+import discord
 
 intents = discord.Intents.default()
 
@@ -57,13 +58,6 @@ async def on_ready():
     await diff_client.start()  # required
 
 
-# on bot close event
-@bot.event
-async def on_close():
-    # close Diffcord requests client
-    await diff_client.close_requests()  # optional, but recommended
-
-
 @bot.slash_command(name="example")
 async def example_command(ctx):
     # get user vote info
@@ -78,6 +72,4 @@ async def example_command(ctx):
 
 
 bot.run("YOUR_BOT_TOKEN")
-
-
 ```

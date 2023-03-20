@@ -19,19 +19,33 @@ class VoteWebhookListener:
     """
 
     def __init__(self, port: int, handle_vote: Callable[[UserBotVote], Awaitable[None]], host: str = None,
-                 silent: bool = False, verify_code: str = None, listener_sleep: int = 60, log_level: int = logging.CRITICAL):
+                 silent: bool = False, verify_code: str = None, listener_sleep: int = 60,
+                 log_level: int = logging.CRITICAL):
         self.port = port
+        """ The port of the webhook listener. """
+
+        self.handle_vote = handle_vote
+        """ The function that will be called when a vote is received. (must be async with one parameter which is of type UserBotVote) """
+
         self.silent = silent
+        """ Whether to print various httpserver messages to the console. """
+
         self.verify_code = verify_code
+        """ The verification code for the webhook listener. """
+
         self.listener_sleep = listener_sleep
+        """ The amount of time to sleep between each stat update. """
+
         self.log_level = log_level
+        """ The log level of the httpserver. """
+
+        self.host = host
+        """ The host of the webhook listener. """
 
         if host is None:
             self.host = "0.0.0.0"
-        else:
-            self.host = host
 
-        self.__app = tornado.web.Application([(r"/", self.__handler_class(handle_vote))], debug=False)
+        self.__app = tornado.web.Application([(r"/", self.__handler_class(self.handle_vote))], debug=False)
         self.__server = HTTPServer(self.__app)
         self.__server.bind(self.port, self.host)
 
@@ -93,22 +107,25 @@ class Client(HTTPApi):
     def __init__(self, bot: Any, token: str, vote_listener: VoteWebhookListener, send_stats: bool = True,
                  send_stats_success: Callable[[], Awaitable[None]] = None,
                  send_stats_failure: Callable[[Exception], Awaitable[None]] = None, base_url: str = None) -> None:
-        """ Initialize a Client object.
-        :param: bot: The bot object
-        :param: token: Diffcord API token
-        :param: vote_listener: The webhook vote listener which listens to incoming vote webhooks from Diffcord
-        :param: send_stats: Whether to send bot stats to Diffcord
-        :param: send_stats_success: A function to call when sending stats to Diffcord is successful
-        :param: send_stats_failure: A function to call when sending stats to Diffcord fails
-        :param: base_url: The base URL of the Diffcord API
-        """
         super().__init__(token, "https://api.diffcord.com" if base_url is None else base_url)
-        self.bot = bot
-        self.token = token
-        self.vote_listener = vote_listener
-        self.send_stats = send_stats
-        self.send_stats_success = send_stats_success
-        self.send_stats_failure = send_stats_failure
+
+        self.bot: Any = bot
+        """ The bot object. """
+
+        self.token: str = token
+        """ The Diffcord API token. """
+
+        self.vote_listener: VoteWebhookListener = vote_listener
+        """ The webhook vote listener which listens to incoming vote webhooks from Diffcord. """
+
+        self.send_stats: bool = send_stats
+        """ Whether to send bot stats to Diffcord. """
+
+        self.send_stats_success: Callable[[], Awaitable[None]] = send_stats_success
+        """ A function to call when sending stats to Diffcord is successful (must be async). """
+
+        self.send_stats_failure: Callable[[Exception], Awaitable[None]] = send_stats_failure
+        """ A function to call when sending stats to Diffcord fails (must be async). """
 
     async def get_user_vote_info(self, user_id: Union[str, int]) -> UserVoteInformation:
         """ Get the vote information for a user.
