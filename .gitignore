@@ -130,3 +130,5 @@ dmypy.json
 
 # testing main
 testing_main.py
+
+.idea
