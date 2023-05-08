@@ -1,4 +1,5 @@
 import datetime
+from typing import Union
 
 
 class UserBotVote:
@@ -49,7 +50,8 @@ class UserVoteInformation:
     """ Represents a user vote information.
     """
 
-    def __init__(self, user_id: str, bot_id: str, monthly_votes: int, since_last_vote: int | None, until_next_vote: int):
+    def __init__(self, user_id: str, bot_id: str, monthly_votes: int, since_last_vote: Union[int, None],
+                 until_next_vote: int):
         self.user_id: str = user_id
         """ The id of the target user. """
 
@@ -59,7 +61,8 @@ class UserVoteInformation:
         self.monthly_votes: int = monthly_votes
         """ The number of votes this user has for the given bot this month. """
 
-        self.since_last_vote: datetime.timedelta = datetime.timedelta(seconds=since_last_vote) if since_last_vote is not None else None
+        self.since_last_vote: datetime.timedelta = datetime.timedelta(
+            seconds=since_last_vote) if since_last_vote is not None else None
         """ Time in seconds since the last vote. """
 
         self.until_next_vote: datetime.timedelta = datetime.timedelta(seconds=until_next_vote)
