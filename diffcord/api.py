@@ -16,6 +16,7 @@ class HTTPApi:
 
         self.__headers = {
             "x-api-key": self.token,
+            "Authorization": self.token,
             "Content-Type": "application/json",
             "User-Agent": f"Diffcord-Python-SDK",
         }
@@ -30,6 +31,9 @@ class HTTPApi:
         async with httpx.AsyncClient() as client:
 
             response = await client.request(method, self.base_url + path, **kwargs, headers=self.__headers)
+
+            if response.status_code == 204:
+                return None
 
             json_data = response.json()
 
