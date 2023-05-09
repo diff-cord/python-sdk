@@ -1,4 +1,5 @@
 import json
+from asyncio import Task
 from typing import Union
 import asyncio
 import datetime
@@ -106,7 +107,10 @@ class Client(HTTPApi):
 
     def __init__(self, bot: Any, token: str, vote_listener: VoteWebhookListener, send_stats: bool = True,
                  send_stats_success: Callable[[], Awaitable[None]] = None,
-                 send_stats_failure: Callable[[Exception], Awaitable[None]] = None, base_url: str = None) -> None:
+                 send_stats_failure: Callable[[Exception], Awaitable[None]] = None,
+                 base_url: str = None,
+                 send_stats_interval: datetime.timedelta = None,
+                 ) -> None:
         super().__init__(token, "https://diffcord.com/api" if base_url is None else base_url)
 
         self.bot: Any = bot
@@ -126,6 +130,9 @@ class Client(HTTPApi):
 
         self.send_stats_failure: Callable[[Exception], Awaitable[None]] = send_stats_failure
         """ A function to call when sending stats to Diffcord fails (must be async). """
+
+        self.send_stats_interval: datetime.timedelta = self.__SEND_STATS_SLEEP_DURATION if send_stats_interval is None else send_stats_interval
+        """ The interval between each stat update request. """
 
     async def get_user_vote_info(self, user_id: Union[str, int]) -> UserVoteInformation:
         """ Get the vote information for a user.
@@ -148,7 +155,7 @@ class Client(HTTPApi):
         """
         await self.make_request("POST", "/v1/stats", params={"guilds": guild_count})
 
-    async def start(self) -> None:
+    async def __start(self) -> None:
         """ Start the client
         """
         # start listener for incoming votes
@@ -176,7 +183,12 @@ class Client(HTTPApi):
                     if self.send_stats_success is not None:
                         await self.send_stats_success()
 
-                await asyncio.sleep(Client.__SEND_STATS_SLEEP_DURATION.total_seconds())
+                await asyncio.sleep(self.send_stats_interval.total_seconds())
+
+    def start(self) -> Task:
+        """ Start the client synchronously.
+        """
+        return asyncio.ensure_future(self.__start())
 
     def __repr__(self):
         return f"<Client bot={self.bot} token={self.token}>"
