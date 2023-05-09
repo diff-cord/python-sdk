@@ -107,7 +107,7 @@ class Client(HTTPApi):
     def __init__(self, bot: Any, token: str, vote_listener: VoteWebhookListener, send_stats: bool = True,
                  send_stats_success: Callable[[], Awaitable[None]] = None,
                  send_stats_failure: Callable[[Exception], Awaitable[None]] = None, base_url: str = None) -> None:
-        super().__init__(token, "https://diffcord.com/api" if base_url is None else base_url)
+        super().__init__(token, "https://www.diffcord.com/api" if base_url is None else base_url)
 
         self.bot: Any = bot
         """ The bot object. """
