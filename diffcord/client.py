@@ -111,7 +111,7 @@ class Client(HTTPApi):
                  base_url: str = None,
                  send_stats_interval: datetime.timedelta = None,
                  ) -> None:
-        super().__init__(token, "https://diffcord.com/api" if base_url is None else base_url)
+        super().__init__(token, "https://www.diffcord.com/api" if base_url is None else base_url)
 
         self.bot: Any = bot
         """ The bot object. """
@@ -186,7 +186,7 @@ class Client(HTTPApi):
                 await asyncio.sleep(self.send_stats_interval.total_seconds())
 
     def start(self) -> Task:
-        """ Start the client synchronously.
+        """ Start the client.
         """
         return asyncio.ensure_future(self.__start())
 
